@@ -11,79 +11,61 @@ st.title("📄 Document QA bot")
 
 with st.expander("ℹ️ About this Chatbot"):
     st.markdown("""
-### 🔍 How it Works
-This chatbot is built with **LangChain** and **Mistral AI** for Retrieval-Augmented Generation (RAG).  
-It allows you to query a PDF document directly, including **scanned images** inside the PDF thanks to RapidOCR.
+# Advanced RAG QA Bot
 
----
+This is an advanced Retrieval-Augmented Generation (RAG) chatbot designed to interact with PDF documents. It leverages LangChain and Mistral AI to provide accurate and contextually aware answers, even from PDFs containing scanned images.
 
-#### 📄 Document Loading
-- Uses **PDFMinerLoader** with `RapidOCRBlobParser` to extract both text and images from PDFs.  
-- Scanned PDFs are supported: text inside **images is converted to text** via OCR.  
-- Each page is treated as a standalone document before splitting.
+## 🚀 Features
 
----
+- **Chat with PDFs**: Ask questions about your PDF documents and get direct, relevant answers.
+- **OCR Support**: Thanks to RapidOCR, it natively works with scanned documents and images within PDFs.
+- **Advanced Retrieval**: Uses a parent-child chunking strategy for precise information retrieval.
+- **Re-ranking**: Employs FlashRank to reduce noise and pass only the most relevant context to the LLM.
+- **Source Verification**: Includes source document chunks in every answer, allowing you to trace the origin of information.
+- **Persistent Vector Store**: Uses ChromaDB for storing embeddings, enabling fast access and reusability.
 
-#### ✂️ Chunking Strategy
-- Documents are not passed directly into embeddings. Instead, they are **split into smaller pieces** to optimize retrieval and LLM input.  
-- **Two-level splitting (Hierarchical):**  
-  - **Parent Chunks (≈2000 characters):** Capture **larger semantic units** like sections or paragraphs.  
-  - **Child Chunks (≈400 characters):** Capture **smaller units** like sentences or sub-paragraphs.  
+## 🔧 How it Works
 
-Why this matters:
-- Parent chunks ensure **context coherence** (you don’t lose meaning by cutting too small).  
-- Child chunks ensure **fine-grained search precision** (retrieval can zoom into very specific details).  
-- When answering, the retriever links back to **parent context** so answers don’t become fragmented.
+This chatbot follows a sophisticated RAG pipeline to ensure answers are accurate and grounded in the document's content.
 
----
+### 📄 Document Loading
 
-#### 📦 Vector Store & Retrieval
-- Uses **ChromaDB** to store embeddings persistently.  
-- Each chunk is embedded with **HuggingFace MiniLM** (`all-MiniLM-L6-v2`).  
+- **PDFMinerLoader**: Used to extract text and images from PDF files.
+- **RapidOCRBlobParser**: Used to perform Optical Character Recognition (OCR) on images within the PDF, making scanned documents fully searchable.
 
-**Retrieval pipeline:**
-1. **ParentDocumentRetriever:**  
-   - Maps child chunks → parent chunks.  
-   - When a child chunk matches the query, the parent chunk is returned, keeping context intact.  
-2. **ContextualCompressionRetriever:**  
-   - Wraps the base retriever.  
-   - Uses **FlashrankRerank** to rerank and filter results, keeping only the most relevant chunks.  
-   - Prevents irrelevant or overly long context from being passed to the LLM.  
+### ✂️ Chunking Strategy
 
-Benefits:
-- More **accurate retrieval** (less noise, better grounding).  
-- Ensures **answers are detailed but contextually correct**.  
-- Handles large PDFs gracefully by not flooding the LLM with unnecessary text.  
+Documents are not passed directly into embeddings. Instead, they are split into smaller pieces to optimize retrieval and LLM input.
 
----
+- **Two-level Splitting (Hierarchical)**:
+    - **Parent Chunks (≈2000 characters)**: Capture larger semantic units like sections or paragraphs.
+    - **Child Chunks (≈400 characters)**: Capture smaller units like sentences or sub-paragraphs.
 
-#### 🧠 Embeddings
-- Uses **dense vector embeddings** (MiniLM, 384 dimensions).  
-- Embeddings capture **semantic meaning** (not just keywords).  
-- This enables **semantic search**:  
-  - Query: *"How to troubleshoot error code 504?"*  
-  - Retrieval finds chunks with phrases like *"Resolving 504 gateway timeout issues..."* even if exact words differ.  
+This strategy ensures retrieval is precise while maintaining contextual coherence for answers.
 
----
+### 📦 Vector Store and Retrieval
 
-#### 🤖 LLM
-- Powered by **Mistral Small** (`ChatMistralAI`) with temperature=0.7.  
-- Prompted for **detailed, grounded responses**.  
-- If the context does not support an answer, the LLM avoids hallucinating and instead uses “context not found”.
+- **ChromaDB**: Used to store embeddings persistently.
+- **HuggingFace MiniLM**: Each chunk is embedded using the `all-MiniLM-L6-v2` model.
 
----
+**Retrieval Pipeline:**
 
-#### 💬 QA Chain
-- Built with **RetrievalQA** (`chain_type="stuff"`).  
-- Combines multiple retrieved chunks into a single context window.  
-- Uses a **custom prompt** tuned for **medical/technical detail**.  
+1.  **ParentDocumentRetriever**: Maps child chunks to their parent chunks. When a child chunk matches a query, the full parent chunk is returned, preserving context.
+2.  **ContextualCompressionRetriever**: Wraps the base retriever and uses **FlashrankRerank** to re-rank and filter results, ensuring only the most relevant chunks are passed to the LLM.
 
----
+### 🧠 Embeddings
 
-✅ **Extra Features**  
-- OCR ensures **image-based PDFs** (scans, diagrams with text) are fully searchable.  
-- Reranking ensures only the **top ~10 most relevant chunks** are passed, avoiding LLM context overflow.  
-- Every answer shows **source chunks** so you can trace back the exact document evidence.
+- **Dense Vector Embeddings**: Using MiniLM (384 dimensions), the system captures semantic meaning of text beyond simple keyword matching. This allows it to understand and answer questions that don't use the exact words in the document.
+
+### 🤖 LLM
+
+- **Mistral Small**: The `ChatMistralAI` model (with temperature=0.7) is used to generate detailed, grounded responses. If the retrieved context doesn't contain an answer, the LLM is prompted to avoid hallucination and instead respond with "context not found".
+
+### 💬 QA Chain
+
+- **RetrievalQA**: With `chain_type="stuff"`, it combines multiple retrieved chunks into a single context window.
+- **Custom Prompt**: Uses a custom prompt tuned for medical and technical details, ensuring answers are accurate and contextually appropriate.
+
 """)
 
 # -----------------------------

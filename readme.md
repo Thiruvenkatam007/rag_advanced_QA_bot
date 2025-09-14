@@ -1,73 +1,151 @@
-### 🔍 How it Works
-This chatbot is built with **LangChain** and **Mistral AI** for Retrieval-Augmented Generation (RAG).  
-It allows you to query a PDF document directly, including **scanned images** inside the PDF thanks to RapidOCR.
+# Advanced RAG QA Bot
 
----
+This is an advanced Retrieval-Augmented Generation (RAG) chatbot designed to interact with PDF documents. It leverages LangChain and Mistral AI to provide accurate and contextually aware answers, even from PDFs containing scanned images.
+## 🌐 Live Web App
 
-#### 📄 Document Loading
-- Uses **PDFMinerLoader** with `RapidOCRBlobParser` to extract both text and images from PDFs.  
-- Scanned PDFs are supported: text inside **images is converted to text** via OCR.  
-- Each page is treated as a standalone document before splitting.
+You can try the live web app at: [https://thiruvenkatam007-rag-advanced-qa-bot-app-q0lfr9.streamlit.app/](https://thiruvenkatam007-rag-advanced-qa-bot-app-q0lfr9.streamlit.app/)
+## 🚀 Features
 
----
+- **Chat with PDFs**: Ask questions about your PDF documents and get direct, relevant answers.
+- **OCR Support**: Thanks to RapidOCR, it natively works with scanned documents and images within PDFs.
+- **Advanced Retrieval**: Uses a parent-child chunking strategy for precise information retrieval.
+- **Re-ranking**: Employs FlashRank to reduce noise and pass only the most relevant context to the LLM.
+- **Source Verification**: Includes source document chunks in every answer, allowing you to trace the origin of information.
+- **Persistent Vector Store**: Uses ChromaDB for storing embeddings, enabling fast access and reusability.
 
-#### ✂️ Chunking Strategy
-- Documents are not passed directly into embeddings. Instead, they are **split into smaller pieces** to optimize retrieval and LLM input.  
-- **Two-level splitting (Hierarchical):**  
-  - **Parent Chunks (≈2000 characters):** Capture **larger semantic units** like sections or paragraphs.  
-  - **Child Chunks (≈400 characters):** Capture **smaller units** like sentences or sub-paragraphs.  
+## 🔧 How it Works
 
-Why this matters:
-- Parent chunks ensure **context coherence** (you don’t lose meaning by cutting too small).  
-- Child chunks ensure **fine-grained search precision** (retrieval can zoom into very specific details).  
-- When answering, the retriever links back to **parent context** so answers don’t become fragmented.
+This chatbot follows a sophisticated RAG pipeline to ensure answers are accurate and grounded in the document's content.
 
----
+### 📄 Document Loading
 
-#### 📦 Vector Store & Retrieval
-- Uses **ChromaDB** to store embeddings persistently.  
-- Each chunk is embedded with **HuggingFace MiniLM** (`all-MiniLM-L6-v2`).  
+- **PDFMinerLoader**: Used to extract text and images from PDF files.
+- **RapidOCRBlobParser**: Used to perform Optical Character Recognition (OCR) on images within the PDF, making scanned documents fully searchable.
 
-**Retrieval pipeline:**
-1. **ParentDocumentRetriever:**  
-   - Maps child chunks → parent chunks.  
-   - When a child chunk matches the query, the parent chunk is returned, keeping context intact.  
-2. **ContextualCompressionRetriever:**  
-   - Wraps the base retriever.  
-   - Uses **FlashrankRerank** to rerank and filter results, keeping only the most relevant chunks.  
-   - Prevents irrelevant or overly long context from being passed to the LLM.  
+### ✂️ Chunking Strategy
 
-Benefits:
-- More **accurate retrieval** (less noise, better grounding).  
-- Ensures **answers are detailed but contextually correct**.  
-- Handles large PDFs gracefully by not flooding the LLM with unnecessary text.  
+Documents are not passed directly into embeddings. Instead, they are split into smaller pieces to optimize retrieval and LLM input.
 
----
+- **Two-level Splitting (Hierarchical)**:
+    - **Parent Chunks (≈2000 characters)**: Capture larger semantic units like sections or paragraphs.
+    - **Child Chunks (≈400 characters)**: Capture smaller units like sentences or sub-paragraphs.
 
-#### 🧠 Embeddings
-- Uses **dense vector embeddings** (MiniLM, 384 dimensions).  
-- Embeddings capture **semantic meaning** (not just keywords).  
-- This enables **semantic search**:  
-  - Query: *"How to troubleshoot error code 504?"*  
-  - Retrieval finds chunks with phrases like *"Resolving 504 gateway timeout issues..."* even if exact words differ.  
+This strategy ensures retrieval is precise while maintaining contextual coherence for answers.
 
----
+### 📦 Vector Store and Retrieval
 
-#### 🤖 LLM
-- Powered by **Mistral Small** (`ChatMistralAI`) with temperature=0.7.  
-- Prompted for **detailed, grounded responses**.  
-- If the context does not support an answer, the LLM avoids hallucinating and instead uses “context not found”.
+- **ChromaDB**: Used to store embeddings persistently.
+- **HuggingFace MiniLM**: Each chunk is embedded using the `all-MiniLM-L6-v2` model.
 
----
+**Retrieval Pipeline:**
 
-#### 💬 QA Chain
-- Built with **RetrievalQA** (`chain_type="stuff"`).  
-- Combines multiple retrieved chunks into a single context window.  
-- Uses a **custom prompt** tuned for **medical/technical detail**.  
+1.  **ParentDocumentRetriever**: Maps child chunks to their parent chunks. When a child chunk matches a query, the full parent chunk is returned, preserving context.
+2.  **ContextualCompressionRetriever**: Wraps the base retriever and uses **FlashrankRerank** to re-rank and filter results, ensuring only the most relevant chunks are passed to the LLM.
 
----
+### 🧠 Embeddings
 
-✅ **Extra Features**  
-- OCR ensures **image-based PDFs** (scans, diagrams with text) are fully searchable.  
-- Reranking ensures only the **top ~10 most relevant chunks** are passed, avoiding LLM context overflow.  
-- Every answer shows **source chunks** so you can trace back the exact document evidence.
+- **Dense Vector Embeddings**: Using MiniLM (384 dimensions), the system captures semantic meaning of text beyond simple keyword matching. This allows it to understand and answer questions that don't use the exact words in the document.
+
+### 🤖 LLM
+
+- **Mistral Small**: The `ChatMistralAI` model (with temperature=0.7) is used to generate detailed, grounded responses. If the retrieved context doesn't contain an answer, the LLM is prompted to avoid hallucination and instead respond with "context not found".
+
+### 💬 QA Chain
+
+- **RetrievalQA**: With `chain_type="stuff"`, it combines multiple retrieved chunks into a single context window.
+- **Custom Prompt**: Uses a custom prompt tuned for medical and technical details, ensuring answers are accurate and contextually appropriate.
+
+## 🏗️ System Architecture
+
+```
++-------------------+      +------------------+      +----------------------+
+|   PDF Document    |----->| PDFMinerLoader & |----->|  RecursiveCharacter  |
+| (text and images) |      | RapidOCRParser   |      |    TextSplitter      |
++-------------------+      +------------------+      +----------------------+
+                                                           |
+                                                           v
++----------------------+      +------------------+      +----------------------+
+| HuggingFace          |<-----| ChromaDB         |<-----| ParentDocument       |
+| Embeddings           |      | (Vector Store)   |      | Retriever            |
+| (all-MiniLM-L6-v2)   |      +------------------+      +----------------------+
++----------------------+                                     |
+                                                               v
++----------------------+      +------------------+      +----------------------+
+| Mistral Small (LLM)  |<-----| RetrievalQA      |<-----| ContextualCompression|
+|                      |      | (Custom Prompt)  |      | Retriever w/         |
+|                      |      |                  |      | FlashrankRerank      |
++----------------------+      +------------------+      +----------------------+
+        ^                                                        |
+        |                                                        v
++-------+--------------------------------------------------------+-------+
+|                           User Interface (Streamlit)                   |
++------------------------------------------------------------------------+
+```
+
+## ⚙️ Installation
+
+1.  **Clone this repository:**
+    ```bash
+    git clone https://github.com/your-username/rag_advanced_QA_bot.git
+    cd rag_advanced_QA_bot
+    ```
+
+2.  **Install dependencies:**
+    Ensure you have Python 3.8+.
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3.  **Set your Mistral AI API Key:**
+    Create a `.env` file with your Mistral AI API key:
+    ```
+    MISTRAL_API_KEY="your_mistral_api_key"
+    ```
+
+## 🚀 Usage
+
+1.  **Place your PDF:**
+    Put the PDF document you want to query in the root of the repository and name it `oasis_manual.pdf`, or update the path in `app.py`.
+
+2.  **Run the application:**
+    ```bash
+    streamlit run app.py
+    ```
+
+3.  **Ask Questions:**
+    Open the local URL provided in your browser and start asking questions about the document.
+
+## 📦 Dependencies
+
+- streamlit==1.49.1
+- langchain==0.3.27
+- langchain-community==0.3.29
+- langchain-text-splitters==0.3.9
+- langchain-chroma==0.2.6
+- langchain-mistralai==0.2.11
+- langchain-openai==0.3.33
+- chromadb==1.0.21
+- FlashRank==0.2.10
+- pdfminer.six==20250506
+- rapidocr-onnxruntime==1.4.4
+- huggingface-hub==0.34.4
+- sentence-transformers==5.1.0
+- torch==2.8.0
+- tqdm==4.67.1
+- pydantic==2.11.7
+- pysqlite3-binary
+
+## 🔧 Configuration
+
+You can modify the following variables in the `app.py` file:
+
+- `persist_dir`: Directory for the ChromaDB vector store.
+- `init_mode`: How to initialize the vector store ("auto", "new", or "existing").
+- `pdf_path`: Path to your PDF document.
+
+## 📈 Future Enhancements
+
+- **Support for Multiple Documents**: Add the ability to query multiple PDFs at once.
+- **Better UI**: Enhance the UI with more advanced features like conversation history and document highlighting.
+- **Integration with Other LLMs**: Add support for other language models, such as GPT-4 or Llama.
+- **Metadata Filtering**: Implement the ability to filter document chunks based on metadata for improved retrieval accuracy.
