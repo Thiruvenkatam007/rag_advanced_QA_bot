@@ -1,6 +1,8 @@
 import streamlit as st
 from rag_pipeline import build_pipeline
-
+import sys
+import pysqlite3
+sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
 # -----------------------------
 # Streamlit UI Setup
 # -----------------------------

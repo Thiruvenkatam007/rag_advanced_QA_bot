@@ -1,4 +1,8 @@
 import os
+import sys
+import pysqlite3
+sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+
 from langchain_community.document_loaders import PDFMinerLoader
 from langchain_community.document_loaders.parsers import RapidOCRBlobParser
 from langchain_text_splitters import RecursiveCharacterTextSplitter
