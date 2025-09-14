@@ -90,12 +90,12 @@ def get_retriever(vectorstore, parent_splitter, child_splitter, persist_dir, doc
         docstore=store,
         child_splitter=child_splitter,
         parent_splitter=parent_splitter,
-        search_kwargs={"k": 10},
+        search_kwargs={"k": 20},
     )
     if docs:
         retriever.add_documents(docs)
 
-    compressor = FlashrankRerank()
+    compressor = FlashrankRerank(top_n=10)
     return ContextualCompressionRetriever(
         base_compressor=compressor,
         base_retriever=retriever,
@@ -104,7 +104,9 @@ def get_retriever(vectorstore, parent_splitter, child_splitter, persist_dir, doc
 # 5. Setup LLM
 # -----------------------------
 def get_llm():
-    os.environ["MISTRAL_API_KEY"] = "P0AUWKMTSLXCWrAZNdIlbS7ErumZBXnW"
+    import streamlit as st
+    api_key = st.secrets["api_keys"]["mistral"]
+    os.environ["MISTRAL_API_KEY"] = api_key
     return ChatMistralAI(model="mistral-small", temperature=0.7)
 
 # -----------------------------
