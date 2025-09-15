@@ -3,7 +3,7 @@
 This is an advanced Retrieval-Augmented Generation (RAG) chatbot designed to interact with PDF documents. It leverages LangChain and Mistral AI to provide accurate and contextually aware answers, even from PDFs containing scanned images.
 ## 🌐 Live Web App
 
-You can try the live web app at: [https://thiruvenkatam007-rag-advanced-qa-bot-app-q0lfr9.streamlit.app/](https://thiruvenkatam007-rag-advanced-qa-bot-app-q0lfr9.streamlit.app/)
+You can try the live web app at: [https://thiruvenkatam007-rag-advanced-qa-bot-app-q0lfr9.streamlit.app/](https://thiruvenkatam007-rag-advanced-qa-bot-app-q0lfr9.streamlit.app/) (May be in sleep mode reach out to me in case you need to access it)
 ## 🚀 Features
 
 - **Chat with PDFs**: Ask questions about your PDF documents and get direct, relevant answers.
