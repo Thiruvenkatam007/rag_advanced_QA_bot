@@ -1,4 +1,5 @@
 # Advanced RAG QA Bot
+<img width="1341" height="597" alt="image" src="https://github.com/user-attachments/assets/1103b5d7-1509-4208-9c1e-4435123cb4e7" />
 
 This is an advanced Retrieval-Augmented Generation (RAG) chatbot designed to interact with PDF documents. It leverages LangChain and Mistral AI to provide accurate and contextually aware answers, even from PDFs containing scanned images.
 ## 🌐 Live Web App
